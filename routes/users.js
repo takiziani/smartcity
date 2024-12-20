@@ -181,10 +181,22 @@ router.post("/users/logout", verifyjwt, async (request, response) => {
 });
 // update the user name email and storename
 router.patch("/users/update", verifyjwt, async (request, response) => {
-    const id = request.userid;
-    const user = request.body;
-    const allowedColumns = ["name", "email", "storename"]; // Specify the columns that can be updated
     try {
+        const id = request.user.id;
+        const role = request.user.role;
+        const user = request.body;
+        let upuser;
+        if (role !== "resident" && role !== "hauberge") {
+            return response.status(400).json({ error: "Invalid role" });
+        }
+        let allowedColumns;
+        if (role == "resident") {
+            allowedColumns = ["nom", "prenom", "telephone", "email", "date_naissance", "lieu_naissance", "sexe", "numero_carte_identite", "permission_parentale"]; // Specify the columns that can be updated
+        }
+        if (role == "hauberge") {
+            allowedColumns = ["nom", "telephone", "email", "capacite", "emplacement", "adresse", "nbr_personne_reserve", "disponibilite"]; // Specify the columns that can be updated
+        }
+
         // Filter out the properties that are not allowed to be updated
         const updatedUser = Object.keys(user).reduce((acc, key) => {
             if (allowedColumns.includes(key)) {
@@ -192,18 +204,36 @@ router.patch("/users/update", verifyjwt, async (request, response) => {
             }
             return acc;
         }, {});
-        await User.update(updatedUser, { where: { id_user: id } });
-        response.json({ message: `User with id ${id} has been updated` });
+        if (role == "resident") {
+            upuser = await Resident.update(updatedUser, { where: { id: id } });
+        }
+        if (role == "hauberge") {
+            upuser = await Hauberge.update(updatedUser, { where: { id: id } });
+        }
+        response.json({ message: `User with id ${id} has been updated`, updatedUser });
     } catch (error) {
         response.status(400).json({ error: error.message });
     }
 });
 // update the user password
 router.patch("/users/updatepassword", verifyjwt, async (request, response) => {
-    const id = request.userid;
     try {
+        const id = request.user.id;
+        const role = request.user.role;
         const { oldpassword, newpassword } = request.body;
-        const user = await User.findByPk(id);
+        if (!oldpassword || !newpassword) {
+            return response.status(400).json({ error: "Invalid password" });
+        }
+        if (role !== "resident" && role !== "hauberge") {
+            return response.status(400).json({ error: "Invalid role" });
+        }
+        let user;
+        if (role == "resident") {
+            user = await Resident.findOne({ where: { id: id } });
+        }
+        if (role == "hauberge") {
+            user = await Hauberge.findOne({ where: { id: id } });
+        }
         if (!user) {
             return response.status(404).json({ error: "User not found" });
         }

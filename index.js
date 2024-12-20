@@ -5,7 +5,6 @@ import cors from "cors";
 import { corsOptions } from './cors/corsoptions.js';
 import { credentials } from './cors/cridentials.js';
 import sequelize from './sequelize/config.js';
-import './sequelize/relation.js'; // Import models and associations
 import router from './routes/index.js';
 
 dotenv.config(); // Ensure this is called before using any environment variables
@@ -22,7 +21,7 @@ sequelize.authenticate()
     .then(() => {
         console.log('Connection has been established successfully.');
         // Sync all models at once
-        return sequelize.sync({ force: false, alter: true });
+        return sequelize.sync({ force: false, alter: false });
     })
     .then(() => {
         console.log('Database synchronized');

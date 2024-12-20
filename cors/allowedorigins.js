@@ -1,5 +1,6 @@
 const allowedOrigins = [
     'http://localhost:3000',
-    "https://devfest-ten.vercel.app"
+    "http://localhost:5000"
+
 ];
 export default allowedOrigins;
