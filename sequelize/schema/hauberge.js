@@ -42,7 +42,8 @@ const Hauberge = sequelize.define('Hauberge', {
         type: DataTypes.INTEGER
     },
     disponibilite: {
-        type: DataTypes.BOOLEAN
+        type: DataTypes.BOOLEAN,
+        defaultValue: true
     },
     image_list: {
         type: DataTypes.JSON //Liste des liens de chemins

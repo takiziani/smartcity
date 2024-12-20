@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { Hauberge, Resident } from "../sequelize/relation.js";
+import { Hauberge, Reservation, Resident } from "../sequelize/relation.js";
 import { hashPassword, comparePassword } from "../utils/helper.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import verifyjwt from "../utils/jwt.js";
 import { Op } from 'sequelize';
+import autoresponse from "../utils/gemini.js";
 dotenv.config();
 const router = Router();
 // Create a new user
@@ -251,6 +252,19 @@ router.patch("/users/updatepassword", verifyjwt, async (request, response) => {
         }
     } catch (error) {
         response.status(400).json({ error: error.message });
+    }
+});
+router.get("/resident/plan", verifyjwt, async (request, response) => {
+    try {
+        if (request.user.role !== 'resident') {
+            return response.status(403).json({ error: "Vous n'êtes pas autorisé à accéder à cette ressource" });
+        }
+        const latest = Reservation.findOne({ where: { resident_id: request.user.id }, order: [['createdAt', 'DESC']] });
+        const duration = latest.date_sortie - latest.date_entree;
+        const plan = autoresponse(duration);
+        response.json(plan);
+    } catch (error) {
+        response.status(500).json({ error: error.message });
     }
 });
 export default router;

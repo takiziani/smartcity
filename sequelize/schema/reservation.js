@@ -35,7 +35,7 @@ const Reservation = sequelize.define('Reservation', {
     nature_reservation: {
         type: DataTypes.ENUM('Gratuit', 'Non Gratuit')
     },
-    restauration_montant: {
+    montant: {
         type: DataTypes.DECIMAL(10, 2)
     }
 });

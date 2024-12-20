@@ -27,7 +27,7 @@ const Resident = sequelize.define('Resident', {
     numero_carte_identite: {
         type: DataTypes.STRING,
         unique: true,
-        allowNull: false
+        allowNull: true
     },
     permission_parentale: {
         type: DataTypes.BOOLEAN
@@ -48,6 +48,11 @@ const Resident = sequelize.define('Resident', {
     },
     refreshToken: {
         type: DataTypes.STRING
+    },
+    role: {
+        type: DataTypes.ENUM('private', 'agency', 'club', "admin"),
+        allowNull: false,
+        defaultValue: "private"
     }
 }, {
     timestamps: false,
