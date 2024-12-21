@@ -260,10 +260,10 @@ router.get("/resident/plan", verifyjwt, async (request, response) => {
         if (request.user.role !== 'resident') {
             return response.status(403).json({ error: "Vous n'êtes pas autorisé à accéder à cette ressource" });
         }
-        const latest = Reservation.findOne({ where: { resident_id: request.user.id }, order: [['createdAt', 'DESC']] });
-        const duration = latest.date_sortie - latest.date_entree;
-        const plan = autoresponse(duration);
-        response.json(plan);
+        const latest = await Reservation.findOne({ where: { resident_id: request.user.id }, order: [['createdAt', 'DESC']] });
+        const duration = Math.ceil((new Date(latest.date_sortie) - new Date(latest.date_entree)) / (1000 * 60 * 60 * 24));
+        const plan = await autoresponse(duration);
+        response.json({ message: "Plan generated", plan });
     } catch (error) {
         response.status(500).json({ error: error.message });
     }

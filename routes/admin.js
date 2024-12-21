@@ -6,12 +6,20 @@ import { Op } from 'sequelize';
 dotenv.config();
 const router = Router();
 router.use(verifyjwt);
-router.get("/reservation", async (req, res) => {
+const checkAdminAccess = async (req, res, next) => {
+    const user = await Resident.findOne({ where: { id: req.user.id } });
+    if (!user) {
+        return res.status(403).json({ error: "Vous n'êtes pas autorisé à accéder à cette ressource" });
+    }
+    if (user.role !== 'admin') {
+        return res.status(403).json({ error: "Vous n'êtes pas autorisé à accéder à cette ressource" });
+    }
+    next();
+};
+router.use(checkAdminAccess);
+router.get("/admin/reservation", async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ error: "Vous n'êtes pas autorisé à accéder à cette ressource" });
-        }
-        if (req.body) {
+        if (req.body.start_date && req.body.end_date) {
             const { start_date, end_date } = req.body;
             const reservation = await Reservation.findAll({
                 where: {
@@ -20,25 +28,12 @@ router.get("/reservation", async (req, res) => {
                     },
                     date_sortie: {
                         [Op.lte]: end_date
-                    },
-                    include: [
-                        {
-                            model: Resident,
-                            attributes: ['nom', 'prnom']
-                        }
-                    ]
+                    }
                 }
             });
             return res.json(reservation);
         }
-        const reservation = await Reservation.findAll({
-            include: [
-                {
-                    model: Resident,
-                    attributes: ['nom', 'prnom']
-                }
-            ]
-        });
+        const reservation = await Reservation.findAll();
         res.json(reservation);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -46,10 +41,7 @@ router.get("/reservation", async (req, res) => {
 });
 router.get("/nombre-reservation", async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ error: "Vous n'êtes pas autorisé à accéder à cette ressource" });
-        }
-        if (req.body) {
+        if (req.body.start_date && req.body.end_date) {
             const { start_date, end_date } = req.body;
             const reservation = await Reservation.count({
                 where: {
@@ -71,10 +63,7 @@ router.get("/nombre-reservation", async (req, res) => {
 });
 router.get("/nombre-resident", async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ error: "Vous n'êtes pas autorisé à accéder à cette ressource" });
-        }
-        if (req.body) {
+        if (req.body.start_date && req.body.end_date) {
             const { start_date, end_date } = req.body;
             const resident = await Resident.count({
                 where: {
@@ -96,10 +85,7 @@ router.get("/nombre-resident", async (req, res) => {
 });
 router.get("/nombre-hauberge", async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ error: "Vous n'êtes pas autorisé à accéder à cette ressource" });
-        }
-        if (req.body) {
+        if (req.body.start_date && req.body.end_date) {
             const { start_date, end_date } = req.body;
             const hauberge = await Hauberge.count({
                 where: {
@@ -121,10 +107,7 @@ router.get("/nombre-hauberge", async (req, res) => {
 });
 router.get("/total-montant", async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ error: "Vous n'êtes pas autorisé à accéder à cette ressource" });
-        }
-        if (req.body) {
+        if (req.body.start_date && req.body.end_date) {
             const { start_date, end_date } = req.body;
             const montant = await Reservation.sum('montant', {
                 where: {
@@ -146,9 +129,6 @@ router.get("/total-montant", async (req, res) => {
 });
 router.delete("/hauberge/:id", async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ error: "Vous n'êtes pas autorisé à accéder à cette ressource" });
-        }
         const { id } = req.params;
         const hauberge = await Hauberge.findByPk(id);
         if (!hauberge) {
@@ -162,9 +142,6 @@ router.delete("/hauberge/:id", async (req, res) => {
 });
 router.delete("/resident/:id", async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ error: "Vous n'êtes pas autorisé à accéder à cette ressource" });
-        }
         const { id } = req.params;
         const resident = await Resident.findByPk(id);
         if (!resident) {
@@ -176,5 +153,12 @@ router.delete("/resident/:id", async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
+router.get("/resident", async (req, res) => {
+    try {
+        const resident = await Resident.findAll();
+        res.json(resident);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 export default router;
