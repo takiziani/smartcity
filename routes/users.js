@@ -14,6 +14,7 @@ router.post("/users/register", async (request, response) => {
         const user = request.body;
         user.password = hashPassword(user.password);
         if (user.role === "resident") {
+            delete user.role;
             const resident = await Resident.create(user);
             response.json({ message: "Resident created" });
         }
