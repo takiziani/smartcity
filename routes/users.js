@@ -255,15 +255,14 @@ router.patch("/users/updatepassword", verifyjwt, async (request, response) => {
         response.status(400).json({ error: error.message });
     }
 });
-router.get("/resident/plan", verifyjwt, async (request, response) => {
+router.post("/resident/plan", verifyjwt, async (request, response) => {
     try {
         if (request.user.role !== 'resident') {
             return response.status(403).json({ error: "Vous n'êtes pas autorisé à accéder à cette ressource" });
         }
-        const latest = await Reservation.findOne({ where: { resident_id: request.user.id }, order: [['createdAt', 'DESC']] });
-        const duration = Math.ceil((new Date(latest.date_sortie) - new Date(latest.date_entree)) / (1000 * 60 * 60 * 24));
-        const plan = await autoresponse(duration);
-        response.json({ message: "Plan generated", plan });
+        const message = request.body.message;
+        const res = await autoresponse(message);
+        response.json(res);
     } catch (error) {
         response.status(500).json({ error: error.message });
     }
